@@ -43,12 +43,18 @@
     <div class="mt-3">
       <v-layout class="mb-3" v-if="user">
         <v-flex xs12>
-          <v-form @submit.prevent="handleAddPostMessage">
+          <v-form
+            v-model="isFormValid"
+            lazy-validation
+            ref="form"
+            @submit.prevent="handleAddPostMessage"
+          >
             <v-layout row>
               <v-flex xs12>
                 <v-text-field
                   v-model="messageBody"
                   clearable
+                  :rules="messageRules"
                   :append-outer-icon=" messageBody && 'send'"
                   prepend-icon="email"
                   @click:append-outer="handleAddPostMessage"
@@ -86,7 +92,7 @@
                 </v-list-tile-content>
 
                 <v-list-tile-action class="hidden-xs-only">
-                  <v-icon color="grey">chat_bubble</v-icon>
+                  <v-icon :color="checkIfOwnMessage(message)? 'accent': 'grey'">chat_bubble</v-icon>
                 </v-list-tile-action>
               </v-list-tile>
             </template>
@@ -106,7 +112,13 @@ export default {
   data() {
     return {
       dialog: false,
-      messageBody: ""
+      messageBody: "",
+      isFormValid: true,
+      messageRules: [
+        message => !!message || "Message is required",
+        message =>
+          message.length < 75 || "Message must be less than 75 characters"
+      ]
     };
   },
   props: ["postId"],
@@ -125,21 +137,41 @@ export default {
   },
   methods: {
     handleAddPostMessage() {
-      const variables = {
-        messageBody: this.messageBody,
-        userId: this.user._id,
-        postId: this.postId
-      };
+      if (this.$refs.form.validate()) {
+        const variables = {
+          messageBody: this.messageBody,
+          userId: this.user._id,
+          postId: this.postId
+        };
 
-      this.$apollo
-        .mutate({
-          mutation: ADD_POST_MESSAGE,
-          variables
-        })
-        .then(({ data }) => {
-          console.log(data.addPostMessage);
-        })
-        .catch(err => console.error(err));
+        this.$apollo
+          .mutate({
+            mutation: ADD_POST_MESSAGE,
+            variables,
+            update: (cache, { data: { addPostMessage } }) => {
+              const data = cache.readQuery({
+                query: GET_POST,
+                variables: {
+                  postId: this.postId
+                }
+              });
+              data.getPost.messages.unshift(addPostMessage);
+
+              cache.writeQuery({
+                query: GET_POST,
+                variables: {
+                  postId: this.postId
+                },
+                data
+              });
+            }
+          })
+          .then(({ data }) => {
+            this.$refs.form.reset();
+            console.log(data.addPostMessage);
+          })
+          .catch(err => console.error(err));
+      }
     },
     goToPreviousPage() {
       this.$router.go(-1);
@@ -148,6 +180,9 @@ export default {
       if (window.innerWidth > 500) {
         this.dialog = !this.dialog;
       }
+    },
+    checkIfOwnMessage(message) {
+      return this.user && this.user._id === message.messageUser._id;
     }
   }
 };
