@@ -1,10 +1,10 @@
 <template>
-  <v-container fuild grid-list-xl>
-    <!--Post Cards -->
+  <v-container fluid grid-list-xl>
+    <!-- Post Cards -->
     <v-layout row wrap v-if="infiniteScrollPosts">
       <v-flex xs12 sm6 v-for="post in infiniteScrollPosts.posts" :key="post._id">
         <v-card hover>
-          <v-card-media @click.native="goToPost(post._id)" lazy height="30vh" :src="post.imageUrl"></v-card-media>
+          <v-card-media @click.native="goToPost(post._id)" :src="post.imageUrl" height="30vh" lazy></v-card-media>
 
           <v-card-actions>
             <v-card-title primary>
@@ -13,24 +13,23 @@
                 <span class="grey--text">{{post.likes}} likes - {{post.messages.length}} comments</span>
               </div>
             </v-card-title>
-
             <v-spacer></v-spacer>
-
             <v-btn @click="showPostCreator = !showPostCreator" icon>
-              <v-icon>{{`keyboard_arrow_${showPostCreator? 'up': 'down'}`}}</v-icon>
+              <v-icon>{{`keyboard_arrow_${showPostCreator ? 'up' : 'down'}`}}</v-icon>
             </v-btn>
           </v-card-actions>
 
-          <!--Post Creator Tile -->
+          <!-- Post Creator Tile -->
           <v-slide-y-transition>
             <v-card-text v-show="showPostCreator" class="grey lighten-4">
               <v-list-tile avatar>
                 <v-list-tile-avatar>
                   <img :src="post.createdBy.avatar">
                 </v-list-tile-avatar>
+
                 <v-list-tile-content>
                   <v-list-tile-title class="text--primary">{{post.createdBy.username}}</v-list-tile-title>
-                  <v-list-tile-sub-title class="font-weight-thin">Added {{post.createdDate}}</v-list-tile-sub-title>
+                  <v-list-tile-subtitle class="font-weight-thin">Added {{post.createdDate}}</v-list-tile-subtitle>
                 </v-list-tile-content>
 
                 <v-list-tile-action>
@@ -45,10 +44,10 @@
       </v-flex>
     </v-layout>
 
-    <!-- Fetch more -->
+    <!-- Fetch More Button -->
     <v-layout v-if="showMoreEnabled" column>
       <v-flex xs12>
-        <v-layout row justify-center>
+        <v-layout justify-center row>
           <v-btn color="info" @click="showMorePosts">Fetch More</v-btn>
         </v-layout>
       </v-flex>
@@ -57,9 +56,9 @@
 </template>
 
 <script>
-import { INFINITE_SCROLL_POSTS } from "../../queries.js";
+import { INFINITE_SCROLL_POSTS } from "../../queries";
 
-const pageSize = 4;
+const pageSize = 2;
 
 export default {
   name: "Posts",
@@ -80,27 +79,30 @@ export default {
     }
   },
   methods: {
+    goToPost(postId) {
+      this.$router.push(`/posts/${postId}`);
+    },
     showMorePosts() {
-      //fetch more data and transform original result
       this.pageNum += 1;
+      // fetch more data and transform original result
       this.$apollo.queries.infiniteScrollPosts.fetchMore({
         variables: {
+          // pageNum incremented by 1
           pageNum: this.pageNum,
           pageSize
         },
-        goToPost(postId) {
-          this.$router.push(`/posts/${postId}`);
-        },
         updateQuery: (prevResult, { fetchMoreResult }) => {
+          console.log("previous result", prevResult.infiniteScrollPosts.posts);
+          console.log("fetch more result", fetchMoreResult);
+
           const newPosts = fetchMoreResult.infiniteScrollPosts.posts;
           const hasMore = fetchMoreResult.infiniteScrollPosts.hasMore;
-
           this.showMoreEnabled = hasMore;
 
           return {
             infiniteScrollPosts: {
               __typename: prevResult.infiniteScrollPosts.__typename,
-              //Merge previous posts with new posts
+              // Merge previous posts with new posts
               posts: [...prevResult.infiniteScrollPosts.posts, ...newPosts],
               hasMore
             }
@@ -111,4 +113,3 @@ export default {
   }
 };
 </script>
-
