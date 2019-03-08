@@ -1,17 +1,17 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
-import router from './router';
+import Vue from 'vue'
+import Vuex from 'vuex'
+import router from './router'
 
-import { defaultClient as apolloClient } from './main';
+import { defaultClient as apolloClient } from './main'
 import {
   GET_POSTS,
   SIGNIN_USER,
   GET_CURRENT_USER,
   SIGNUP_USER,
   ADD_POST
-} from './queries';
+} from './queries'
 
-Vue.use(Vuex);
+Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
@@ -23,43 +23,43 @@ export default new Vuex.Store({
   },
   mutations: {
     setPosts: (state, payload) => {
-      state.posts = payload;
+      state.posts = payload
     },
     setUser: (state, payload) => {
-      state.user = payload;
+      state.user = payload
     },
     setLoading: (state, payload) => {
-      state.loading = payload;
+      state.loading = payload
     },
     setError: (state, payload) => {
-      state.error = payload;
+      state.error = payload
     },
     setAuthError: (state, payload) => {
-      state.authError = payload;
+      state.authError = payload
     },
     clearUser: state => (state.user = null),
     clearError: state => (state.error = null)
   },
   actions: {
     getCurrentUser: ({ commit }) => {
-      commit('setLoading', true);
+      commit('setLoading', true)
       apolloClient
         .query({
           query: GET_CURRENT_USER
         })
         .then(({ data }) => {
-          console.log(data.getCurrentUser);
-          commit('setLoading', false);
-          commit('setUser', data.getCurrentUser);
+          console.log(data.getCurrentUser)
+          commit('setLoading', false)
+          commit('setUser', data.getCurrentUser)
         })
         .catch(err => {
-          console.error(err);
-          commit('setLoading', false);
-        });
+          console.error(err)
+          commit('setLoading', false)
+        })
     },
     getPosts: ({ commit }) => {
       //use ApolloClient to fire getPOsts query
-      commit('setLoading', true);
+      commit('setLoading', true)
       apolloClient
         .query({
           query: GET_POSTS
@@ -67,14 +67,14 @@ export default new Vuex.Store({
         .then(({ data }) => {
           //get data from actions to states via mutuations
           // commit passes data from axtions along to mutation functgions
-          commit('setPosts', data.getPosts);
-          commit('setLoading', false);
-          console.log(data.getPosts);
+          commit('setPosts', data.getPosts)
+          commit('setLoading', false)
+          console.log(data.getPosts)
         })
         .catch(err => {
-          commit('setLoading', false);
-          console.error(err);
-        });
+          commit('setLoading', false)
+          console.error(err)
+        })
     },
     addPost: ({ commit }, payload) => {
       apolloClient
@@ -84,16 +84,16 @@ export default new Vuex.Store({
           update: (cache, { data: { addPost } }) => {
             // First read the query you want to update
 
-            const data = cache.readQuery({ query: GET_POSTS });
+            const data = cache.readQuery({ query: GET_POSTS })
             //Create updated data
-            data.getPosts.unshift(addPost);
-            console.log(data);
+            data.getPosts.unshift(addPost)
+            console.log(data)
 
             //write updated data back to the query
             cache.writeQuery({
               query: GET_POSTS,
               data
-            });
+            })
           },
           optimisticResponse: {
             __typename: 'Mutation',
@@ -105,15 +105,15 @@ export default new Vuex.Store({
           }
         })
         .then(({ data }) => {
-          console.log(data.addPost);
+          console.log(data.addPost)
         })
         .catch(err => {
-          console.error(err);
-        });
+          console.error(err)
+        })
     },
     signinUser: ({ commit }, payload) => {
-      commit('setLoading', true);
-      commit('clearError');
+      commit('setLoading', true)
+      commit('clearError')
 
       apolloClient
         .mutate({
@@ -121,21 +121,21 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
-          commit('setLoading', false);
-          localStorage.setItem('token', data.signinUser.token);
+          commit('setLoading', false)
+          localStorage.setItem('token', data.signinUser.token)
           // to make sure created method is run in main.js
           //reload the page
-          router.go();
+          router.go()
         })
         .catch(err => {
-          commit('setLoading', false);
-          commit('setError', err);
-          console.error(err);
-        });
+          commit('setLoading', false)
+          commit('setError', err)
+          console.error(err)
+        })
     },
     signupUser: ({ commit }, payload) => {
-      commit('setLoading', true);
-      commit('clearError');
+      commit('setLoading', true)
+      commit('clearError')
 
       apolloClient
         .mutate({
@@ -143,34 +143,35 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
-          commit('setLoading', false);
-          localStorage.setItem('token', data.signupUser.token);
+          commit('setLoading', false)
+          localStorage.setItem('token', data.signupUser.token)
           // to make sure created method is run in main.js
           //reload the page
-          router.go();
+          router.go()
         })
         .catch(err => {
-          commit('setLoading', false);
-          commit('setError', err);
-          console.error(err);
-        });
+          commit('setLoading', false)
+          commit('setError', err)
+          console.error(err)
+        })
     },
     signoutUser: async ({ commit }) => {
       // clear user in state
-      commit('clearUser');
+      commit('clearUser')
       // remove token on localStorage
-      localStorage.setItem('token', '');
+      localStorage.setItem('token', '')
       //end session
-      await apolloClient.resetStore();
+      await apolloClient.resetStore()
       // redirect home
-      router.push('/');
+      router.push('/')
     }
   },
   getters: {
     posts: state => state.posts,
     loading: state => state.loading,
     user: state => state.user,
+    userFavorites: state => state.user && state.user.favorites,
     error: state => state.error,
     authError: state => state.authError
   }
-});
+})

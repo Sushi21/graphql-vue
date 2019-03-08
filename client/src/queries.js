@@ -1,4 +1,4 @@
-import { gql } from 'apollo-boost';
+import { gql } from 'apollo-boost'
 
 /* Posts Queries */
 
@@ -10,7 +10,7 @@ export const GET_POSTS = gql`
       imageUrl
     }
   }
-`;
+`
 
 export const GET_POST = gql`
   query($postId: ID!) {
@@ -34,7 +34,7 @@ export const GET_POST = gql`
       }
     }
   }
-`;
+`
 
 export const INFINITE_SCROLL_POSTS = gql`
   query($pageNum: Int!, $pageSize: Int!) {
@@ -59,7 +59,7 @@ export const INFINITE_SCROLL_POSTS = gql`
       }
     }
   }
-`;
+`
 
 /* User Queries */
 export const GET_CURRENT_USER = gql`
@@ -78,7 +78,7 @@ export const GET_CURRENT_USER = gql`
       }
     }
   }
-`;
+`
 
 /* Post Mutations */
 export const ADD_POST = gql`
@@ -104,7 +104,7 @@ export const ADD_POST = gql`
       createdDate
     }
   }
-`;
+`
 
 export const ADD_POST_MESSAGE = gql`
   mutation($messageBody: String!, $userId: ID!, $postId: ID!) {
@@ -123,7 +123,33 @@ export const ADD_POST_MESSAGE = gql`
       }
     }
   }
-`;
+`
+
+export const LIKE_POST = gql`
+  mutation($postId: ID!, $username: String!) {
+    likePost(postId: $postId, username: $username) {
+      likes
+      favorites {
+        _id
+        title
+        imageUrl
+      }
+    }
+  }
+`
+
+export const UNLIKE_POST = gql`
+  mutation($postId: ID!, $username: String!) {
+    unlikePost(postId: $postId, username: $username) {
+      likes
+      favorites {
+        _id
+        title
+        imageUrl
+      }
+    }
+  }
+`
 
 /* User Mutations*/
 
@@ -133,7 +159,7 @@ export const SIGNIN_USER = gql`
       token
     }
   }
-`;
+`
 
 export const SIGNUP_USER = gql`
   mutation($username: String!, $email: String!, $password: String!) {
@@ -141,4 +167,4 @@ export const SIGNUP_USER = gql`
       token
     }
   }
-`;
+`
