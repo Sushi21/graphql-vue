@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const PostSchema = new mongoose.Schema({
   title: {
@@ -48,6 +48,11 @@ const PostSchema = new mongoose.Schema({
       }
     }
   ]
-});
+})
 
-module.exports = mongoose.model('Post', PostSchema);
+// Create Index to search on all fields of posts
+PostSchema.index({
+  '$**': 'text'
+})
+
+module.exports = mongoose.model('Post', PostSchema)

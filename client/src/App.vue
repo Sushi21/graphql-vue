@@ -42,11 +42,34 @@
       <!--  Search Input -->
       <v-text-field
         flex
+        v-model="searchTerm"
+        @input="handleSearchPosts"
         prepend-icon="search"
         placeholder="Search posts"
         color="accent"
         single-line-hide-details
       ></v-text-field>
+
+      <!-- Search Result Card -->
+      <v-card dark v-if="searchResults.length" id="search__card">
+        <v-list>
+          <v-list-tile
+            @click="goToSearchResult(result._id)"
+            v-for="result in searchResults"
+            :key="result._id"
+          >
+            <v-list-tile-title>
+              {{ result.title }} -
+              <span
+                class="font-weight-thin"
+              >{{ formatDescription(result.description) }}</span>
+            </v-list-tile-title>
+            <v-list-tile-action v-if="checkIfUserFavorite(result._id)">
+              <v-icon>favorite</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+      </v-card>
 
       <v-spacer></v-spacer>
 
@@ -117,7 +140,8 @@ export default {
       sideNav: false,
       authSnackbar: false,
       authErrorSnackbar: false,
-      badgeAnimated: false
+      badgeAnimated: false,
+      searchTerm: ""
     };
   },
   watch: {
@@ -140,7 +164,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["user", "authError", "userFavorites"]),
+    ...mapGetters(["searchResults", "user", "authError", "userFavorites"]),
     horizontalNavItems() {
       let items = [
         { icon: "chat", title: "Posts", link: "/posts" },
@@ -173,11 +197,37 @@ export default {
     }
   },
   methods: {
+    goToSearchResult(resultId) {
+      // Clear search term
+      this.searchTerm = "";
+
+      // Go to desired result
+      this.$router.push(`/posts/${resultId}`);
+      // Clear search results
+      this.$store.commit("clearSearchResults");
+    },
+    checkIfUserFavorite(resultId) {
+      var result =
+        this.userFavorites &&
+        this.userFavorites.some(fave => fave._id === resultId);
+
+      console.log(result);
+
+      return result;
+    },
+    formatDescription(desc) {
+      return desc.length > 10 ? `${desc.slice(0, 10)}...` : desc;
+    },
     toggleSideNav() {
       this.sideNav = !this.sideNav;
     },
     handleSignoutUser() {
       this.$store.dispatch("signoutUser");
+    },
+    handleSearchPosts() {
+      this.$store.dispatch("searchPosts", {
+        searchTerm: this.searchTerm
+      });
     }
   }
 };
@@ -201,6 +251,14 @@ export default {
 
 .bounce {
   animation: bounce 1s both;
+}
+
+#search__card {
+  position: absolute;
+  width: 100vw;
+  z-index: 8;
+  top: 100%;
+  left: 0%;
 }
 
 @keyframes bounce {
