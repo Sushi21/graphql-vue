@@ -9,7 +9,10 @@ import {
   GET_CURRENT_USER,
   SIGNUP_USER,
   ADD_POST,
-  SEARCH_POSTS
+  SEARCH_POSTS,
+  GET_USER_POSTS,
+  UPDATE_USER_POST,
+  DELETE_USER_POST
 } from './queries'
 
 Vue.use(Vuex)
@@ -17,6 +20,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     posts: [],
+    userPosts: [],
     searchResults: [],
     user: null,
     loading: false,
@@ -26,6 +30,9 @@ export default new Vuex.Store({
   mutations: {
     setPosts: (state, payload) => {
       state.posts = payload
+    },
+    setUserPosts: (state, payload) => {
+      state.userPosts = payload
     },
     setSearchResults: (state, payload) => {
       if (payload !== null) {
@@ -56,7 +63,6 @@ export default new Vuex.Store({
           query: GET_CURRENT_USER
         })
         .then(({ data }) => {
-          console.log(data.getCurrentUser)
           commit('setLoading', false)
           commit('setUser', data.getCurrentUser)
         })
@@ -77,12 +83,22 @@ export default new Vuex.Store({
           // commit passes data from axtions along to mutation functgions
           commit('setPosts', data.getPosts)
           commit('setLoading', false)
-          console.log(data.getPosts)
         })
         .catch(err => {
           commit('setLoading', false)
           console.error(err)
         })
+    },
+    getUserPosts: ({ commit }, payload) => {
+      apolloClient
+        .query({
+          query: GET_USER_POSTS,
+          variables: payload
+        })
+        .then(({ data }) => {
+          commit('setUserPosts', data.getUserPosts)
+        })
+        .catch(err => console.error(err))
     },
     searchPosts: ({ commit }, payload) => {
       apolloClient
@@ -106,7 +122,6 @@ export default new Vuex.Store({
             const data = cache.readQuery({ query: GET_POSTS })
             //Create updated data
             data.getPosts.unshift(addPost)
-            console.log(data)
 
             //write updated data back to the query
             cache.writeQuery({
@@ -125,6 +140,29 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           console.log(data.addPost)
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    },
+    updateUserPost: ({ state, commit }, payload) => {
+      apolloClient
+        .mutate({
+          mutation: UPDATE_USER_POST,
+          variables: payload
+        })
+        .then(({ data }) => {
+          const index = state.userPosts.findIndex(
+            post => post._id === data.updateUserPost._id
+          )
+
+          const userPosts = [
+            ...state.userPosts.slice(0, index),
+            data.updateUserPost,
+            ...state.userPosts.slice(index + 1)
+          ]
+
+          commit('setUserPosts', userPosts)
         })
         .catch(err => {
           console.error(err)
@@ -183,10 +221,33 @@ export default new Vuex.Store({
       await apolloClient.resetStore()
       // redirect home
       router.push('/')
+    },
+    deleteUserPost: async ({ state, commit }, payload) => {
+      apolloClient
+        .mutate({
+          mutation: DELETE_USER_POST,
+          variables: payload
+        })
+        .then(({ data }) => {
+          const index = state.userPosts.findIndex(
+            post => post._id === data.deleteUserPost._id
+          )
+
+          const userPosts = [
+            ...state.userPosts.slice(0, index),
+            ...state.userPosts.slice(index + 1)
+          ]
+
+          commit('setUserPosts', userPosts)
+        })
+        .catch(err => {
+          console.error(err)
+        })
     }
   },
   getters: {
     posts: state => state.posts,
+    userPosts: state => state.userPosts,
     searchResults: state => state.searchResults,
     loading: state => state.loading,
     user: state => state.user,

@@ -211,8 +211,6 @@ export default {
         this.userFavorites &&
         this.userFavorites.some(fave => fave._id === resultId);
 
-      console.log(result);
-
       return result;
     },
     formatDescription(desc) {
