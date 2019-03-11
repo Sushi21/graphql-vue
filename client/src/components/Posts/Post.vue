@@ -87,7 +87,7 @@
                     {{message.messageUser.username}}
                     <span
                       class="grey--text text--lighten-1 hidden-xs-only"
-                    >{{message.messageDate}}</span>
+                    >{{getTimeFromNow(message.messageDate)}}</span>
                   </v-list-tile-sub-title>
                 </v-list-tile-content>
 
@@ -111,6 +111,7 @@ import {
   UNLIKE_POST
 } from "../../queries.js";
 import { mapGetters } from "vuex";
+import moment from "moment";
 
 export default {
   name: "Post",
@@ -142,6 +143,9 @@ export default {
     ...mapGetters(["user", "userFavorites"])
   },
   methods: {
+    getTimeFromNow(time) {
+      return moment(new Date(time)).fromNow();
+    },
     checkIfPostLiked(postId) {
       if (
         this.userFavorites &&
